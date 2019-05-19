@@ -1,0 +1,80 @@
+How would you design the call between the methods of two services?
+Following the money transfer example: how should  TransactionService look for AccountService, and call one of its methods?
+
+
+
+________________________________________________________________________________________________________________________
+1. Instantiating the service
+
+class TransactionService {
+    public moneyTransfer(...) {
+        ...
+        AccountService as = new AccountService();
+        Account a1 = as.get(id);
+        ...
+    }
+ }
+
+
+    +++ When using the moneyTransfer method, we do not have to think about what kind of AccountService instance should we use, it is choosen for us
+            Roughly saying, less configuration is needed for the user.
+
+    --- The AccountService class is hard coded into the moneyTransfer method, and can not be changed without rewriting the method.
+            Also this means that the code is not flexible if an other, sightly different AccountService instance usage would be needed.
+    --- This method might have too much task to be done with it, if it also responsible for creating an AccountService instance.
+    --- Harder to test because of hard code (mocking).
+________________________________________________________________________________________________________________________
+2. Calling static service methods
+class TransactionService {
+    public moneyTransfer(...) {
+        ...
+        Account a1 = AccountService.getAccount(id);
+        ...
+    }
+}
+
+
+    +++ Similarly to the first one, less configuration is needed. The decision of choosing an AccountService is within the method.
+    +++ Needs less row to write down in the method.
+    +++ With "one" instance of the class, this implementation might be stateless (at least, there is no instance variable)
+
+    --- Hard coded AccountService usage, not flexible for implementing other business logic (by changing the Class).
+    --- Just like the first one, it's hard to test (mocking, and also because only one instance of the class).
+
+________________________________________________________________________________________________________________________
+3. Calling for a singleton instance
+class TransactionService {
+    public moneyTransfer(...) {
+        ...
+        AccountService as = AccountService.getInstance();
+        Account a1 = as.get(id);
+        ...
+    }
+}
+
+    +++ Less configuration is needed when using the method.
+    +++ Business logic can be implemented in the getInstance() method (Factory pattern)
+
+    --- The AccountService is responsible for the business logic, I am limited in this concern.
+    --- Hard coded, harder to test (mocking)
+________________________________________________________________________________________________________________________
+4. Using dependency injection
+class TransactionService {
+    private AccountService as;
+    TransactionService(AccountService as) {
+        this.as = as;
+    }
+    public moneyTransfer(...) {
+        ...
+        Account a1 = as.get(id);
+        ...
+    }
+}
+
+    +++ Easiest to test because DI can be used through the constructor.
+    +++ The method user has the possibility to decide which AccountService would be the best.
+    +++ The method is only responsible for one task (or at least, less than the previous ones).
+
+    --- When using the method we have to decide which AccounService should we use.
+    --- We have to take care of the instantiation somewhere else in the code (associated code lines are separated)
+    --- Far more code lines are needed for this implementation.
